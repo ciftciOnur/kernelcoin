@@ -1,8 +1,8 @@
 package tr.edu.yeditepe.kernelcoin.domain.model.kernelblock;
 
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.Setter;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.UnsupportedEncodingException;
@@ -22,18 +22,21 @@ public class KernelBlock {
     private String data;
     private long timeStamp;
     private int nonce;
+    private long order;
 
-    public KernelBlock(String data, String previousHash, long timeStamp) {
+    public KernelBlock(String data, String previousHash, long timeStamp, long order) {
         this.data = data;
         this.previousHash = previousHash;
         this.timeStamp = timeStamp;
+        this.order = order;
         this.hash = calculateBlockHash();
     }
 
     public String calculateBlockHash() {
         String dataToHash = previousHash
                 + timeStamp
-                + Integer.toString(nonce)
+                + nonce
+                + order
                 + data;
         MessageDigest digest = null;
         byte[] bytes = null;
@@ -56,5 +59,9 @@ public class KernelBlock {
             hash = calculateBlockHash();
         }
         return hash;
+    }
+
+    public String toString(){
+        return order+timeStamp+previousHash+hash+data;
     }
 }
