@@ -7,13 +7,12 @@ import org.springframework.stereotype.Service;
 import tr.edu.yeditepe.kernelcoin.domain.model.StompSessions.StompSessions;
 import tr.edu.yeditepe.kernelcoin.domain.model.blockchain.BlockChain;
 import tr.edu.yeditepe.kernelcoin.domain.model.kernelblock.KernelBlock;
-import tr.edu.yeditepe.kernelcoin.interfaces.client.SocketClient;
+import tr.edu.yeditepe.kernelcoin.interfaces.dto.ConsentBlockDto;
 import tr.edu.yeditepe.kernelcoin.interfaces.dto.StatusDto;
 import tr.edu.yeditepe.kernelcoin.service.MinerService;
 
 import java.util.Date;
 import java.util.List;
-import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
 @Service
@@ -22,33 +21,44 @@ import java.util.stream.Collectors;
 public class MinerServiceImpl implements MinerService {
 
     private final BlockChain blockChain;
-    private final SocketClient client;
     private final StompSessions sessions;
 
     @Override
     @Scheduled(fixedDelay = 1000)
     public void scheduledMiner(){
-        log.info("The miner is started");
-        mineKernelBlock("test");
-        sessions.getSessions().get(0).send("/app/consent-request",blockChain.getKernelBlocks()
-                .get(blockChain.getKernelBlocks().size()-1));
-
+        if(checkMinerStatus()) {
+            log.info("The miner is started");
+            KernelBlock consentBlock = mineKernelBlock("test");
+            ConsentBlockDto consentDto = ConsentBlockDto.builder()
+                    .minerId(blockChain.getMinerId())
+                    .hash(consentBlock.getHash())
+                    .data(consentBlock.getData())
+                    .nonce(consentBlock.getNonce())
+                    .order(consentBlock.getOrder())
+                    .previousHash(consentBlock.getPreviousHash())
+                    .timeStamp(consentBlock.getTimeStamp())
+                    .build();
+            sessions.getSessions().get(0).send("/app/consent-request", consentDto);
+        }
+        else
+            log.info("No node available");
     }
 
     @Override
-    public void mineKernelBlock(String data)  {
+    public KernelBlock mineKernelBlock(String data)  {
         if(blockChain.getKernelBlocks().size()==0){
-            createGenesisBlock();
+            return createGenesisBlock();
         }
         KernelBlock currentBlock = blockChain.getKernelBlocks().get(blockChain.getKernelBlocks().size()-1);
         KernelBlock nextBlock = new KernelBlock(data,currentBlock.getHash(),
                 new Date().getTime(),currentBlock.getOrder()+1);
-        blockChain.getKernelBlocks().add(nextBlock);
+        return nextBlock;
     }
 
     @Override
     public List<StatusDto> status(){
         return blockChain.getKernelBlocks().stream().map(m -> StatusDto.builder()
+                .order(m.getOrder())
                 .hash(m.getHash())
                 .previousHash(m.getPreviousHash())
                 .data(m.getData())
@@ -56,20 +66,17 @@ public class MinerServiceImpl implements MinerService {
                 .build()).collect(Collectors.toList());
     }
 
-    private void createGenesisBlock(){
-        try {
-            client.WebSocketClient();
-        } catch (ExecutionException e) {
-            throw new RuntimeException(e);
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
-        }
+    private KernelBlock createGenesisBlock(){
         KernelBlock genesisBlock = new KernelBlock(
                 "The is a Genesis Block.",
                 "The is a Genesis Block.",
                 new Date().getTime(),0);
         genesisBlock.mineBlock(4);
-        blockChain.getKernelBlocks().add(genesisBlock);
+        return genesisBlock;
+    }
+
+    private boolean checkMinerStatus(){
+        return blockChain.isMining();
     }
 
 }

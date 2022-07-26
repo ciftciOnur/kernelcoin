@@ -2,15 +2,15 @@
 package tr.edu.yeditepe.kernelcoin.infrastructure.config;
 
 
-import lombok.RequiredArgsConstructor;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.simp.stomp.*;
 import org.springframework.stereotype.Component;
 import tr.edu.yeditepe.kernelcoin.domain.model.StompSessions.StompSessions;
 import tr.edu.yeditepe.kernelcoin.domain.model.blockchain.BlockChain;
-import tr.edu.yeditepe.kernelcoin.domain.model.kernelblock.KernelBlock;
 import tr.edu.yeditepe.kernelcoin.interfaces.dto.ConsentBlockDto;
+import tr.edu.yeditepe.kernelcoin.service.ConsentService;
 
 import java.lang.reflect.Type;
 
@@ -21,9 +21,11 @@ public class CustomStompSessionHandler extends StompSessionHandlerAdapter {
     private Logger logger = LogManager.getLogger(CustomStompSessionHandler.class);
 
     private final StompSessions sessions;
+    private final ConsentService consentService;
 
-    public CustomStompSessionHandler(StompSessions session) {
+    public CustomStompSessionHandler(StompSessions session,ConsentService consent) {
         sessions = session;
+        consentService=consent;
     }
 
 
@@ -31,6 +33,7 @@ public class CustomStompSessionHandler extends StompSessionHandlerAdapter {
     public void afterConnected(StompSession session, StompHeaders connectedHeaders) {
         logger.info("New session established : " + session.getSessionId());
         session.subscribe("/topic/distrubution", this);
+        session.subscribe("/topic/consents", this);
         logger.info("Subscribed to /topic/messages");
         //session.send("/app/consent-request",blockChain.getKernelBlocks()
         //        .get(blockChain.getKernelBlocks().size()-1));
@@ -50,8 +53,13 @@ public class CustomStompSessionHandler extends StompSessionHandlerAdapter {
 
     @Override
     public void handleFrame(StompHeaders headers, Object payload) {
-        ConsentBlockDto msg = (ConsentBlockDto) payload;
-        logger.info("Received : " + msg.getTimeStamp() + " from : " + msg.getOrder());
+        ConsentBlockDto consentBlockDto = (ConsentBlockDto) payload;
+        if(headers.getDestination().contentEquals("/topic/distrubution"))
+            consentService.checkKernelBlock(consentBlockDto);
+        else if(headers.getDestination().contentEquals("/topic/consents")){
+            consentService.checkIfConsensusIsOk(consentBlockDto);
+        }
+        logger.info("header"+headers.getDestination()+"Received : " + consentBlockDto.getTimeStamp() + " from : " + consentBlockDto.getMinerId());
     }
 
 }

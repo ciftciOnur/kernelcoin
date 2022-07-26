@@ -8,6 +8,7 @@ import lombok.Setter;
 @Setter
 @Builder
 public class StatusDto {
+    private long order;
     private String hash;
     private String previousHash;
     private String data;

@@ -1,12 +1,12 @@
 package tr.edu.yeditepe.kernelcoin.interfaces.dto;
 
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
+
+import java.util.UUID;
 
 @Getter
 @Setter
+@Builder
 @AllArgsConstructor
 @NoArgsConstructor
 public class ConsentBlockDto {
@@ -16,4 +16,6 @@ public class ConsentBlockDto {
     private long timeStamp;
     private int nonce;
     private long order;
+    private UUID minerId;
+    private int numberOfConsents;
 }

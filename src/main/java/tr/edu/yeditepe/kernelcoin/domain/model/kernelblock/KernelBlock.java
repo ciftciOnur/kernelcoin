@@ -4,12 +4,10 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
+import tr.edu.yeditepe.kernelcoin.interfaces.dto.ConsentBlockDto;
 
-import java.io.UnsupportedEncodingException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 
@@ -63,5 +61,13 @@ public class KernelBlock {
 
     public String toString(){
         return order+timeStamp+previousHash+hash+data;
+    }
+
+    public KernelBlock(ConsentBlockDto consent){
+        this.data = consent.getData();
+        this.previousHash = consent.getPreviousHash();
+        this.timeStamp = consent.getTimeStamp();
+        this.order = consent.getOrder();
+        this.hash = consent.getHash();
     }
 }

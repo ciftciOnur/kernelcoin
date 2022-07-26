@@ -11,8 +11,10 @@ import java.util.ArrayList;
 @Setter
 public class StompSessions {
     private ArrayList<StompSession> sessions;
+    private String nodeIp;
 
     public StompSessions(){
         sessions=new ArrayList<>();
+        nodeIp="localhost:8084";
     }
 }
