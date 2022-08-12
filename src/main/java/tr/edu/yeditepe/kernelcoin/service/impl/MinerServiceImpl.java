@@ -2,7 +2,6 @@ package tr.edu.yeditepe.kernelcoin.service.impl;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import tr.edu.yeditepe.kernelcoin.domain.model.StompSessions.StompSessions;
 import tr.edu.yeditepe.kernelcoin.domain.model.blockchain.BlockChain;
@@ -24,11 +23,11 @@ public class MinerServiceImpl implements MinerService {
     private final StompSessions sessions;
 
     @Override
-    @Scheduled(fixedDelay = 1000)
-    public void scheduledMiner(){
+    public void doMine(ConsentBlockDto consentBlockDto){
+        blockChain.setMining(true);
         if(checkMinerStatus()) {
             log.info("The miner is started");
-            KernelBlock consentBlock = mineKernelBlock("test");
+            KernelBlock consentBlock = mineKernelBlock(consentBlockDto);
             ConsentBlockDto consentDto = ConsentBlockDto.builder()
                     .minerId(blockChain.getMinerId())
                     .hash(consentBlock.getHash())
@@ -38,6 +37,7 @@ public class MinerServiceImpl implements MinerService {
                     .previousHash(consentBlock.getPreviousHash())
                     .timeStamp(consentBlock.getTimeStamp())
                     .build();
+            blockChain.setMining(false);
             sessions.getSessions().get(0).send("/app/consent-request", consentDto);
         }
         else
@@ -45,12 +45,12 @@ public class MinerServiceImpl implements MinerService {
     }
 
     @Override
-    public KernelBlock mineKernelBlock(String data)  {
+    public KernelBlock mineKernelBlock(ConsentBlockDto consentBlockDto)  {
         if(blockChain.getKernelBlocks().size()==0){
-            return createGenesisBlock();
+            return createGenesisBlock(consentBlockDto);
         }
         KernelBlock currentBlock = blockChain.getKernelBlocks().get(blockChain.getKernelBlocks().size()-1);
-        KernelBlock nextBlock = new KernelBlock(data,currentBlock.getHash(),
+        KernelBlock nextBlock = new KernelBlock(consentBlockDto.getData(),currentBlock.getHash(),
                 new Date().getTime(),currentBlock.getOrder()+1);
         return nextBlock;
     }
@@ -66,12 +66,12 @@ public class MinerServiceImpl implements MinerService {
                 .build()).collect(Collectors.toList());
     }
 
-    private KernelBlock createGenesisBlock(){
+    private KernelBlock createGenesisBlock(ConsentBlockDto consentBlockDto){
         KernelBlock genesisBlock = new KernelBlock(
                 "The is a Genesis Block.",
                 "The is a Genesis Block.",
                 new Date().getTime(),0);
-        genesisBlock.mineBlock(4);
+        genesisBlock.mineBlock(consentBlockDto.getDiffuculty());
         return genesisBlock;
     }
 

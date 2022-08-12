@@ -19,6 +19,7 @@ import tr.edu.yeditepe.kernelcoin.domain.model.kernelblock.KernelBlock;
 import tr.edu.yeditepe.kernelcoin.infrastructure.config.CustomStompSessionHandler;
 import tr.edu.yeditepe.kernelcoin.interfaces.dto.ConsentBlockDto;
 import tr.edu.yeditepe.kernelcoin.service.ConsentService;
+import tr.edu.yeditepe.kernelcoin.service.MinerService;
 
 @Service
 @RequiredArgsConstructor
@@ -30,16 +31,15 @@ public class ConsentServiceImpl implements ConsentService {
 
     private final BlockChain blockChain;
     private final StompSessions sessions;
+    private final MinerService miner;
 
     @Override
     public void checkKernelBlock(ConsentBlockDto consentBlock){
-        blockChain.setMining(false);
         KernelBlock lastBlock=null;
         if(blockChain.getKernelBlocks().size()!=0)
             lastBlock = blockChain.getKernelBlocks()
                 .get(blockChain.getKernelBlocks().size()-1);
         if(blockChain.getKernelBlocks().size()==0 || consentBlock.getOrder()>lastBlock.getOrder())
-            sessions.getSessions().get(0).send("/app/consent-response", consentBlock);
             sessions.getSessions().get(0).send("/app/consent-response", consentBlock);
         logger.info("Consent is sent");
     }
@@ -53,15 +53,18 @@ public class ConsentServiceImpl implements ConsentService {
             if(lastBlock.getOrder()+1==consentBlock.getOrder()&&consentBlock.getNumberOfConsents()>0){
                 lastBlock = new KernelBlock(consentBlock);
                 blockChain.getKernelBlocks().add(lastBlock);
-                blockChain.setMining(true);
             }
         }
         if(blockChain.getKernelBlocks().size()==0&&consentBlock.getNumberOfConsents()>0){
             lastBlock = new KernelBlock(consentBlock);
             blockChain.getKernelBlocks().add(lastBlock);
-            blockChain.setMining(true);
         }
 
 
+    }
+
+    @Override
+    public void doConsentMine(ConsentBlockDto consentBlockDto){
+        miner.doMine(consentBlockDto);
     }
 }

@@ -18,4 +18,11 @@ public class ConsentBlockDto {
     private long order;
     private UUID minerId;
     private int numberOfConsents;
+    private int diffuculty;
+
+
+    public String toString(){
+        return "order: "+order+ "\ntimestamp: "+ timeStamp + "\npreviousHash: " + previousHash+
+                "\nhash: "+hash+ "\ndata: "+data+"\nminerID: "+minerId;
+    }
 }

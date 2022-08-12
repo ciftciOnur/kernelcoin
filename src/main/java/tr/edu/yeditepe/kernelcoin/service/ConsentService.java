@@ -7,4 +7,6 @@ public interface ConsentService {
     void checkKernelBlock(ConsentBlockDto consentBlock);
 
     void checkIfConsensusIsOk(ConsentBlockDto consentBlock);
+
+    void doConsentMine(ConsentBlockDto consentBlockDto);
 }
