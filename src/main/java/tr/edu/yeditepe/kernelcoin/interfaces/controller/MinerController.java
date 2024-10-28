@@ -9,6 +9,7 @@ import tr.edu.yeditepe.kernelcoin.interfaces.dto.StatusDto;
 import tr.edu.yeditepe.kernelcoin.service.MinerService;
 import tr.edu.yeditepe.kernelcoin.service.Peer2PeerService;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 
